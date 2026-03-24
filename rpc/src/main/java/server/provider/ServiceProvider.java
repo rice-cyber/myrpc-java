@@ -29,7 +29,7 @@ public class ServiceProvider {
         Class<?>[] interfaceName = service.getClass().getInterfaces();
         for (Class<?> clazz : interfaceName) {
             interfaceProvider.put(clazz.getName(), service);
-            serviceRegister.register(clazz.getName(),new InetSocketAddress(host,port));
+            serviceRegister.register(clazz.getName(),new InetSocketAddress(host,port),false);
         }
     }
 

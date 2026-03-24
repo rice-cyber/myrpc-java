@@ -18,6 +18,8 @@ public class ZKServiceRegister implements ServiceRegister {
 
     private static final String ROOT_PATH = "MyRPC";
 
+    private static final String RETRY = "CanRetry";
+
     public ZKServiceRegister() {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
         this.curator = CuratorFrameworkFactory.builder()
@@ -31,14 +33,18 @@ public class ZKServiceRegister implements ServiceRegister {
     }
 
     @Override
-    public void register(String serviceName, InetSocketAddress addr) {
-
+    public void register(String serviceName, InetSocketAddress addr,boolean canRetry) {
         try{
             if (curator.checkExists().forPath(ROOT_PATH + "/" + serviceName) == null) {
                 curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(ROOT_PATH + "/" + serviceName);
             }
             String path = "/"+serviceName+"/"+getServiceAddress(addr);
-            curator.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path);
+            curator.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(path);
+
+            if (canRetry) {
+                String retryPath = "/"+RETRY+"/"+serviceName+"/"+getServiceAddress(addr);
+                curator.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(retryPath);
+            }
         }catch (Exception e){
             log.error("zookeeper register error",e);
         }
