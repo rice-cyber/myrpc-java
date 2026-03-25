@@ -1,5 +1,6 @@
 package server.provider;
 
+import server.ratelimit.provider.RateLimitProvider;
 import server.serviceRegister.ServiceRegister;
 import server.serviceRegister.impl.ZKServiceRegister;
 
@@ -17,11 +18,14 @@ public class ServiceProvider {
 
     private ServiceRegister serviceRegister;
 
+    private RateLimitProvider rateLimitProvider;
+
     public ServiceProvider(int port, String host) {
         this.port = port;
         this.host = host;
         this.interfaceProvider = new HashMap<>();
         this.serviceRegister = new ZKServiceRegister();
+        this.rateLimitProvider = new RateLimitProvider();
     }
 
     public void provideService(Object service) {
@@ -35,6 +39,10 @@ public class ServiceProvider {
 
     public Object getService(String serviceName) {
         return interfaceProvider.get(serviceName);
+    }
+
+    public RateLimitProvider getRateLimitProvider() {
+        return rateLimitProvider;
     }
 
 

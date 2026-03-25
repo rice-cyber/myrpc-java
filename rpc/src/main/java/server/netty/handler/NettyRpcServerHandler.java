@@ -6,6 +6,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import server.provider.ServiceProvider;
+import server.ratelimit.RateLimit;
+import server.ratelimit.provider.RateLimitProvider;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -14,6 +16,7 @@ import java.lang.reflect.Method;
 public class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcRequest> {
 
     private ServiceProvider serviceProvider;
+
 
     public NettyRpcServerHandler(ServiceProvider serviceProvider) {
         this.serviceProvider = serviceProvider;
@@ -28,6 +31,13 @@ public class NettyRpcServerHandler extends SimpleChannelInboundHandler<RpcReques
 
 
     private RpcResponse handle(RpcRequest request) {
+
+        RateLimit rateLimit = serviceProvider.getRateLimitProvider().getRateLimit(request.getInterfaceName());
+        if (!rateLimit.getToken()){
+            log.info("服务限流！！");
+            return RpcResponse.fail();
+        }
+
         Object service= serviceProvider.getService(request.getInterfaceName());
         try {
             Method method = service.getClass().getMethod(request.getMethodName(),request.getParamTypes());
